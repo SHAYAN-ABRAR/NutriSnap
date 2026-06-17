@@ -64,26 +64,6 @@ Open http://localhost:8501 — best viewed in a narrow / mobile window (or your 
 
 ---
 
-## ☁️ Deploy to Streamlit Community Cloud (from GitHub)
-
-1. **Push this folder to a GitHub repo.**
-   ```bash
-   git init
-   git add .
-   git commit -m "NutriSnap"
-   git branch -M main
-   git remote add origin https://github.com/SHAYAN-ABRAR/NutriSnap.git
-   git push -u origin main
-   ```
-2. Go to **[share.streamlit.io](https://share.streamlit.io)** → **New app**.
-3. Pick your repo / branch, set **Main file path** to `app.py`, click **Deploy**.
-4. (Optional) In **Advanced settings → Secrets**, you can pre-seed AI config, or just add your Ollama key later in the app's Settings page.
-
-That's it — Streamlit installs `requirements.txt` and serves `app.py`.
-
-> **Note on storage:** locally, data persists in `data/nutrisnap.db`. On Streamlit Community Cloud the filesystem is *ephemeral* — data lasts for the session but may reset when the app sleeps/redeploys. Use **Settings → Export my data** to back up. For permanent multi-device storage you'd swap the SQLite path for a mounted volume or a hosted DB (see *Scaling* below).
-
----
 
 ## 🗂️ Project structure
 

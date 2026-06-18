@@ -20,8 +20,8 @@ import requests
 from core import nutrition
 
 DEFAULT_HOST = "https://ollama.com"          # Ollama Cloud
-DEFAULT_VISION_MODEL = "gemma3:27b"          # multimodal, cloud-available
-DEFAULT_CHAT_MODEL = "gemma3:27b"
+DEFAULT_VISION_MODEL = "gemma4:31b-cloud"    # Gemma 4 31B — multimodal (text+image), Ollama Cloud
+DEFAULT_CHAT_MODEL = "gemma4:31b-cloud"      # same model handles the coach chat
 TIMEOUT = 90
 
 
@@ -78,9 +78,11 @@ def analyze_food(image_bytes: bytes) -> dict:
                 cfg["vision_model"], cfg, want_json=True,
             )
             foods = _parse_foods(content)
-            if foods:
-                return {"foods": foods, "live": True,
-                        "note": f"Analyzed by {cfg['vision_model']}"}
+            # A live model that genuinely sees no food shouldn't be overridden by a
+            # fabricated colour guess — return the (possibly empty) real result.
+            return {"foods": foods, "live": True,
+                    "note": (f"Analyzed by {cfg['vision_model']}" if foods else
+                             f"{cfg['vision_model']} didn't spot any food — try a clearer, closer photo.")}
         except Exception as e:  # network / model / parse — fall through to heuristic
             return {"foods": _heuristic(image_bytes), "live": False,
                     "note": f"Cloud model unavailable ({type(e).__name__}). Showing on-device estimate."}

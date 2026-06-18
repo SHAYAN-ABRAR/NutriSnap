@@ -48,12 +48,13 @@ def main() -> None:
     palette = C.inject_theme()                   # paint design system
     st.session_state.setdefault("page", "dashboard")
 
+    _topbar()                                    # persistent top bar (logo + language)
+
     # ---- onboarding gate ----
     if not db.is_onboarded():
         onboarding.render(palette)
         return
 
-    _header()
     _celebrations()
 
     page = st.session_state.page
@@ -65,21 +66,42 @@ def main() -> None:
     _nav(page)
 
 
-def _header() -> None:
-    c1, c2 = st.columns([3, 1.1], vertical_alignment="center")
+def _topbar() -> None:
+    """Fixed top bar (mirrors the bottom nav): brand on the left, then the
+    language and theme toggles on the right. The .ns-topmark marker pins the
+    next row to the top."""
+    C.html("<div class='ns-topmark'></div>")
+    c1, c2, c3 = st.columns([5, 1.3, 0.95], vertical_alignment="center")
     with c1:
         C.html(
-            "<div style='font-family:Space Grotesk;font-weight:700;font-size:1.25rem'>"
+            "<div style='font-family:Space Grotesk;font-weight:700;font-size:1.2rem;line-height:1'>"
             "<span class='ns-grad'>Nutri</span><span>Snap</span></div>"
         )
     with c2:
-        # Language toggle — label shows the language you'll switch TO.
-        switch_to = "বাংলা" if i18n.get_lang() == "en" else "English"
-        if st.button(f"🌐 {switch_to}", key="lang_toggle", use_container_width=True,
-                     help="English ⇄ বাংলা (ঢাকাইয়া)"):
-            i18n.toggle_lang()
-            st.rerun()
-    C.html("<div style='height:6px'></div>")
+        _lang_toggle()
+    with c3:
+        _theme_toggle()
+
+
+def _lang_toggle() -> None:
+    """One-tap language toggle: the pill shows the active language and flips it on
+    every click (English ⇄ বাংলা)."""
+    label = "🌐 EN" if i18n.get_lang() == "en" else "🌐 বাং"
+    if st.button(label, key="lang_toggle", use_container_width=False,
+                 help="Switch language · ভাষা বদলান"):
+        i18n.toggle_lang()
+        st.rerun()
+
+
+def _theme_toggle() -> None:
+    """One-tap theme switch: shows the active theme (☀️ light / 🌙 dark) and flips
+    it on every click."""
+    mode = C.get_mode()
+    icon = "🌙" if mode == "dark" else "☀️"
+    if st.button(icon, key="theme_toggle", use_container_width=False,
+                 help=i18n.tf("Light ⇄ Dark theme", "লাইট ⇄ ডার্ক থিম")):
+        db.set_meta("theme", "light" if mode == "dark" else "dark")
+        st.rerun()
 
 
 def _celebrations() -> None:

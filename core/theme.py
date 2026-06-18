@@ -65,15 +65,22 @@ html, body, [data-testid="stAppViewContainer"] {{
   color: var(--text);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }}
+/* root app shell uses the active theme bg (Streamlit's base is hardcoded dark,
+   which would otherwise leak through as black in light mode) */
+[data-testid="stApp"] {{ background: var(--bg) !important; }}
 [data-testid="stHeader"] {{ background: transparent; }}
-[data-testid="stToolbar"] {{ right: 8px; }}
+/* hide Streamlit's top-right chrome (status/deploy/menu) — our top bar owns that space */
+[data-testid="stToolbar"], [data-testid="stStatusWidget"], [data-testid="stAppDeployButton"] {{
+  display: none !important;
+}}
 [data-testid="stDecoration"] {{ display:none; }}
 #MainMenu, footer {{ visibility: hidden; }}
 
-/* tighter, phone-width main column with safe-area padding */
+/* tighter, phone-width main column with safe-area padding.
+   Top padding clears the fixed top bar; bottom padding clears the fixed nav. */
 [data-testid="stMainBlockContainer"], .block-container {{
   max-width: 540px !important;
-  padding: 1.0rem 1.0rem calc(96px + env(safe-area-inset-bottom)) 1.0rem !important;
+  padding: calc(64px + env(safe-area-inset-top)) 1.0rem calc(96px + env(safe-area-inset-bottom)) 1.0rem !important;
 }}
 h1,h2,h3,h4 {{ font-family:'Space Grotesk', sans-serif; letter-spacing:-.5px; color:var(--text); }}
 p, span, label, li {{ color: var(--text); }}
@@ -181,6 +188,44 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div {{ padding: 4px 2px; }}
 
 /* toast-ish callout */
 .ns-toast {{ border-left:3px solid var(--accent); background:var(--surface); border-radius:10px; padding:10px 14px; }}
+
+/* ---------- Fixed top bar (mirrors the bottom nav) ---------- */
+.ns-topmark {{ height:0; }}
+[data-testid="stElementContainer"]:has(.ns-topmark) + * {{
+  position: fixed !important; top: 0 !important; left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 100% !important; max-width: 540px !important; z-index: 1000000 !important;
+  padding: calc(9px + env(safe-area-inset-top)) 16px 9px 16px;
+  background: {("rgba(13,15,20,.82)" if mode=="dark" else "rgba(255,255,255,.88)")};
+  backdrop-filter: blur(16px) saturate(1.2);
+  border-bottom: 1px solid var(--border);
+  border-radius: 0 0 22px 22px !important;
+}}
+/* keep brand + toggles on one centered row */
+[data-testid="stElementContainer"]:has(.ns-topmark) + * [data-testid="stHorizontalBlock"] {{
+  flex-wrap: nowrap !important; align-items: center !important; gap: 8px !important;
+}}
+/* let the columns shrink instead of overflowing the bar (mirrors the nav rule) */
+[data-testid="stElementContainer"]:has(.ns-topmark) + * [data-testid="stColumn"] {{
+  min-width: 0 !important;
+}}
+/* push both toggles to the right edge of the bar */
+.st-key-lang_toggle, .st-key-theme_toggle {{ display: flex !important; justify-content: flex-end !important; }}
+/* shared pill look for the top-bar toggles: compact accent chips */
+.st-key-lang_toggle button, .st-key-theme_toggle button {{
+  min-height: 36px !important; height: 36px !important; line-height: 1 !important;
+  font-weight: 700 !important; border-radius: 999px !important;
+  transform: none !important; box-shadow: none !important; white-space: nowrap !important;
+  background: rgba(0,229,160,.12) !important; color: var(--accent) !important;
+  border: 1px solid rgba(0,229,160,.32) !important;
+}}
+.st-key-lang_toggle button:hover, .st-key-theme_toggle button:hover {{
+  background: rgba(0,229,160,.20) !important; border-color: var(--accent) !important;
+  transform: none !important; box-shadow: none !important;
+}}
+.st-key-lang_toggle button {{ padding: 4px 14px !important; font-size: .85rem !important; }}
+/* theme toggle is icon-only — make it a round chip */
+.st-key-theme_toggle button {{ padding: 0 !important; width: 38px !important; min-width: 38px !important; font-size: 1rem !important; }}
 
 /* ---------- Fixed bottom (thumb-zone) navigation ---------- */
 .ns-navmark {{ height:0; }}
@@ -300,6 +345,9 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div {{ padding: 4px 2px; }}
   bottom: calc(86px + env(safe-area-inset-bottom));
   pointer-events:none;
 }}
+/* Streamlit hardcodes this inner wrapper to the base (dark) backgroundColor, which
+   shows as a black band in light mode — force it transparent in both themes. */
+[data-testid="stBottom"] > div {{ background: transparent !important; }}
 [data-testid="stBottom"] [data-testid="stBottomBlockContainer"] {{
   max-width:540px; margin:0 auto; padding:0 14px 8px;
   background:transparent !important; pointer-events:auto;

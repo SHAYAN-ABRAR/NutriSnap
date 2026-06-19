@@ -223,12 +223,32 @@ COACH_SYSTEM = (
 )
 
 
+def _lang_directive(message: str) -> str:
+    """Tell the live model which language to answer in, mirroring the user.
+
+    Bangla is chosen if the message contains Bangla script OR the UI is toggled
+    to Bangla — otherwise the model just answers in English regardless.
+    """
+    bn = bool(re.search(r"[ঀ-৿]", message or ""))
+    if not bn:
+        try:
+            from core import i18n
+            bn = i18n.get_lang() == "bn"
+        except Exception:
+            bn = False
+    if bn:
+        return ("\n\nIMPORTANT: Reply ONLY in clear, natural, standard Bangladeshi Bangla "
+                "(Bengali) — never in English. Keep it warm and concise.")
+    return "\n\nReply in English."
+
+
 def coach_reply(message: str, context: dict, history: list[dict]) -> str:
     cfg = get_config()
     if cfg["enabled"]:
         try:
             ctx = _context_blurb(context)
-            msgs = [{"role": "system", "content": COACH_SYSTEM + "\n\nUser stats:\n" + ctx}]
+            system = COACH_SYSTEM + _lang_directive(message) + "\n\nUser stats:\n" + ctx
+            msgs = [{"role": "system", "content": system}]
             for h in history[-8:]:
                 msgs.append({"role": h["role"], "content": h["content"]})
             msgs.append({"role": "user", "content": message})

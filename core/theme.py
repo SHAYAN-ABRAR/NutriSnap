@@ -289,6 +289,10 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div {{ padding: 4px 2px; }}
 
 /* ----- center FAB (Scan): raised gradient circle, Venmo-style ----- */
 [data-testid="stElementContainer"]:has(.ns-navmark) + * .st-key-nav_scan button {{
+  /* display:flex makes the circle block-level so `margin:auto` actually centers
+     it in its column (Streamlit's default inline-flex made auto-margins collapse,
+     dropping the FAB to the left). justify/align center the glyph inside. */
+  display: flex !important; align-items: center !important; justify-content: center !important;
   background: linear-gradient(135deg, var(--accent), var(--accent2)) !important;
   width: 58px !important; height: 58px !important; min-height: 58px !important;
   max-width: 58px !important; padding: 0 !important;

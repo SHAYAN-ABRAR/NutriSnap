@@ -26,16 +26,34 @@ TIMEOUT = 90
 
 
 # ------------------------------- configuration -------------------------------
+def _secret(name: str, default: str = "") -> str:
+    """Read a value from Streamlit secrets or the environment.
+
+    Lets cloud deploys (Streamlit Cloud, etc.) supply the API key without a
+    persisted DB — the local filesystem there is ephemeral, so the key set in
+    Settings would not survive a reboot. Locally, the DB value still wins.
+    """
+    import os
+    try:
+        import streamlit as st
+        if name in st.secrets:
+            return str(st.secrets[name])
+    except Exception:
+        pass
+    return os.environ.get(name, default)
+
+
 def get_config() -> dict:
-    """Read AI settings from the local DB (lazy import to avoid cycles)."""
+    """AI settings, preferring the local DB then Streamlit secrets / env vars."""
     from core import database as db
     cfg = db.get_meta("ai_config", {}) or {}
+    api_key = cfg.get("api_key") or _secret("OLLAMA_API_KEY")
     return {
-        "host": cfg.get("host", DEFAULT_HOST),
-        "api_key": cfg.get("api_key", ""),
-        "vision_model": cfg.get("vision_model", DEFAULT_VISION_MODEL),
-        "chat_model": cfg.get("chat_model", DEFAULT_CHAT_MODEL),
-        "enabled": bool(cfg.get("api_key")),
+        "host": cfg.get("host") or _secret("OLLAMA_HOST") or DEFAULT_HOST,
+        "api_key": api_key,
+        "vision_model": cfg.get("vision_model") or _secret("OLLAMA_VISION_MODEL") or DEFAULT_VISION_MODEL,
+        "chat_model": cfg.get("chat_model") or _secret("OLLAMA_CHAT_MODEL") or DEFAULT_CHAT_MODEL,
+        "enabled": bool(api_key),
     }
 
 

@@ -333,6 +333,14 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div {{ padding: 4px 2px; }}
   border-radius:var(--r-lg); padding:15px 17px; box-shadow:var(--shadow);
   margin-bottom:14px;
 }}
+/* keep the AI Coach header card pinned while the conversation scrolls beneath.
+   Sticky is on the element CONTAINER (room to travel in the vertical block);
+   top clears the fixed top bar; the bg masks messages sliding underneath. */
+[data-testid="stElementContainer"]:has(.coach-hero) {{
+  position: sticky !important;
+  top: calc(54px + env(safe-area-inset-top)) !important;
+  z-index: 100; background: var(--bg);
+}}
 .coach-ava {{
   width:46px; height:46px; flex:none; border-radius:14px; font-size:1.45rem;
   display:flex; align-items:center; justify-content:center;

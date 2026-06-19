@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 import streamlit as st
+from st_keyup import st_keyup
 
 from core import database as db
 from core import nutrition as N
@@ -100,9 +101,11 @@ def _add_panel(log_date: str):
     if src == "🔍 Search":
         cat = st.segmented_control("Cuisine", N.categories(), default=None,
                                    key="add_cat", label_visibility="collapsed", format_func=t) or "All"
-        q = st.text_input(t("Search foods"),
-                          placeholder=i18n.tf("e.g. biryani, mango, burger, ilish…",
-                                              "যেমন বিরিয়ানি, আম, বার্গার, ইলিশ…"), key="add_q")
+        # st_keyup reruns on each keystroke (debounced) so results update live
+        q = st_keyup(t("Search foods"),
+                     placeholder=i18n.tf("e.g. biryani, mango, burger, ilish…",
+                                         "যেমন বিরিয়ানি, আম, বার্গার, ইলিশ…"),
+                     key="add_q", debounce=200) or ""
         # show more when browsing a whole cuisine without a query
         limit = 14 if q.strip() else (40 if cat != "All" else 14)
         results = N.search_foods(q, limit=limit, category=cat)

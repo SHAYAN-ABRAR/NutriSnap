@@ -61,6 +61,17 @@ def is_live() -> bool:
     return get_config()["enabled"]
 
 
+def _err_note(e: Exception) -> str:
+    """Readable detail for a failed request, including HTTP status + body."""
+    resp = getattr(e, "response", None)
+    if resp is not None:
+        body = (resp.text or "").strip().replace("\n", " ")
+        if len(body) > 180:
+            body = body[:180] + "…"
+        return f"HTTP {resp.status_code}" + (f": {body}" if body else "")
+    return f"{type(e).__name__}: {e}"
+
+
 def _chat(messages, model, cfg, want_json=False) -> str:
     headers = {"Content-Type": "application/json"}
     if cfg["api_key"]:
@@ -103,7 +114,7 @@ def analyze_food(image_bytes: bytes) -> dict:
                              f"{cfg['vision_model']} didn't spot any food — try a clearer, closer photo.")}
         except Exception as e:  # network / model / parse — fall through to heuristic
             return {"foods": _heuristic(image_bytes), "live": False,
-                    "note": f"Cloud model unavailable ({type(e).__name__}). Showing on-device estimate."}
+                    "note": f"Cloud model unavailable — {_err_note(e)}. Showing on-device estimate."}
     return {"foods": _heuristic(image_bytes), "live": False,
             "note": "Demo mode (no AI key) — on-device colour estimate. Add a key in Settings for real recognition."}
 

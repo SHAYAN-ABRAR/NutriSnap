@@ -48,6 +48,11 @@ def main() -> None:
     palette = C.inject_theme()                   # paint design system
     st.session_state.setdefault("page", "dashboard")
 
+    # clicking the brand wordmark links to ?p=home → route to the dashboard
+    if st.query_params.get("p") == "home":
+        st.session_state.page = "dashboard"
+        st.query_params.clear()
+
     _topbar()                                    # persistent top bar (logo + language)
 
     # ---- onboarding gate ----
@@ -73,9 +78,13 @@ def _topbar() -> None:
     C.html("<div class='ns-topmark'></div>")
     c1, c2, c3 = st.columns([5, 1.3, 0.95], vertical_alignment="center")
     with c1:
+        # the wordmark is a plain HTML link to Home (no button); clicking it sets
+        # ?p=home, which main() reads to route back to the dashboard.
         C.html(
+            "<a href='?p=home' target='_self' "
+            "style='text-decoration:none;color:var(--text);display:inline-block;cursor:pointer'>"
             "<div style='font-family:Space Grotesk;font-weight:700;font-size:1.2rem;line-height:1'>"
-            "<span class='ns-grad'>Nutri</span><span>Snap</span></div>"
+            "<span class='ns-grad'>Nutri</span><span>Snap</span></div></a>"
         )
     with c2:
         _lang_toggle()

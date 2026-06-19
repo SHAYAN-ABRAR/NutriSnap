@@ -219,7 +219,14 @@ COACH_SYSTEM = (
     "You are NutriSnap Coach, a warm, concise, evidence-based nutrition assistant. "
     "Give practical, encouraging, non-judgmental advice in 2–5 short sentences. "
     "Use the user's live stats when relevant. Never give medical diagnoses; suggest "
-    "a professional for medical concerns."
+    "a professional for medical concerns. "
+    "IMPORTANT: Whenever you mention or recommend any food, dish, meal, snack, or "
+    "ingredient, ONLY suggest items that are commonly available and eaten in Bangladesh "
+    "— e.g. rice (bhat), lentils (dal), eggs, chicken, fish (ilish, rui, tilapia), "
+    "beef, yogurt (doi), milk, chickpeas (chola), peanuts, roti, vegetables (shak, "
+    "begun, potol), and seasonal local fruits (kola/banana, aam/mango, peyara/guava, "
+    "papaya). Do NOT recommend foods that are uncommon or hard to find in Bangladesh "
+    "(e.g. Greek yogurt, salmon, quinoa, cottage cheese, kale, blueberries, avocado)."
 )
 
 
@@ -291,8 +298,8 @@ def _coach_fallback(message: str, c: dict) -> str:
     if "protein" in m:
         return (f"You're at **{round(c.get('protein',0))} g** of your "
                 f"{c.get('protein_goal')} g protein goal — about {p_left} g to go. "
-                "Easy wins: Greek yogurt (17 g), a protein shake (27 g), chicken breast "
-                "(46 g/150 g), or cottage cheese (14 g).")
+                "Easy wins: 2 eggs (12 g), a bowl of dal (9 g), yogurt/doi (8 g), "
+                "chicken (27 g/100 g), or fish like rui/ilish.")
     if "water" in m or "hydrat" in m:
         if water_left <= 0:
             return "💧 You've already hit your water goal today — nice work staying hydrated!"
@@ -304,12 +311,12 @@ def _coach_fallback(message: str, c: dict) -> str:
     if any(w in m for w in ("eat", "meal", "dinner", "lunch", "breakfast", "snack", "hungry")):
         if rem <= 0:
             return ("You're at your calorie goal for today 🎯. If you're hungry, lean on "
-                    "high-volume, low-calorie foods: a green salad, berries, or veggies with hummus.")
+                    "high-volume, low-calorie foods: a cucumber/tomato salad, shosha, or seasonal fruit.")
         if rem < 350:
-            return (f"About **{rem} kcal** left — a light option fits best: Greek yogurt with "
-                    "berries, a boiled egg + fruit, or a small salad with chicken.")
-        return (f"You have **{rem} kcal** to play with. A balanced plate: grilled chicken or "
-                "salmon + brown rice/quinoa + a big serving of veg hits protein and fibre nicely.")
+            return (f"About **{rem} kcal** left — a light option fits best: yogurt/doi with "
+                    "fruit, a boiled egg + a banana (kola), or a small bowl of dal.")
+        return (f"You have **{rem} kcal** to play with. A balanced plate: rice (bhat) + dal + "
+                "fish (rui/ilish) or chicken + a serving of shak/veg hits protein and fibre nicely.")
     if "how" in m and ("doing" in m or "progress" in m or "today" in m):
         pct = round(c.get("consumed", 0) / max(1, c.get("calorie_goal", 1)) * 100)
         return (f"You're **{pct}%** through your calorie budget ({round(c.get('consumed',0))}"

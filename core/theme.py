@@ -333,14 +333,6 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div {{ padding: 4px 2px; }}
   border-radius:var(--r-lg); padding:15px 17px; box-shadow:var(--shadow);
   margin-bottom:14px;
 }}
-/* keep the AI Coach header card pinned while the conversation scrolls beneath.
-   Sticky is on the element CONTAINER (room to travel in the vertical block);
-   top clears the fixed top bar; the bg masks messages sliding underneath. */
-[data-testid="stElementContainer"]:has(.coach-hero) {{
-  position: sticky !important;
-  top: calc(54px + env(safe-area-inset-top)) !important;
-  z-index: 100; background: var(--bg);
-}}
 .coach-ava {{
   width:46px; height:46px; flex:none; border-radius:14px; font-size:1.45rem;
   display:flex; align-items:center; justify-content:center;
@@ -409,6 +401,22 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div {{ padding: 4px 2px; }}
 /* reserve room so messages clear the floating input + nav (Coach page only) */
 [data-testid="stAppViewContainer"]:has([data-testid="stChatInput"]) [data-testid="stMainBlockContainer"] {{
   padding-bottom: calc(188px + env(safe-area-inset-bottom)) !important;
+}}
+/* floating "Clear chat" pill: pinned just above the chat input so it's always
+   reachable, even after a long conversation (no awkward mid-page button) */
+.st-key-clear_chat {{
+  position: fixed !important; z-index: 1001 !important; width: auto !important;
+  bottom: calc(150px + env(safe-area-inset-bottom)) !important;
+  right: max(18px, calc(50% - 252px)) !important;
+}}
+.st-key-clear_chat button {{
+  min-height: 0 !important; padding: 6px 14px !important; border-radius: 999px !important;
+  font-size: .8rem !important; white-space: nowrap !important; transform: none !important;
+  background: var(--surface) !important; border: 1px solid var(--border) !important;
+  color: var(--muted) !important; box-shadow: var(--shadow) !important;
+}}
+.st-key-clear_chat button:hover {{
+  border-color: var(--accent) !important; color: var(--text) !important; transform: none !important;
 }}
 
 /* progress bar colour */

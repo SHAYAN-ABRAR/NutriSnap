@@ -402,18 +402,16 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div {{ padding: 4px 2px; }}
 [data-testid="stAppViewContainer"]:has([data-testid="stChatInput"]) [data-testid="stMainBlockContainer"] {{
   padding-bottom: calc(188px + env(safe-area-inset-bottom)) !important;
 }}
-/* floating "Clear chat" pill: pinned just above the chat input so it's always
-   reachable, even after a long conversation (no awkward mid-page button) */
+/* compact "Clear chat" pill, right-aligned just under the hero's Connected pill */
 .st-key-clear_chat {{
-  position: fixed !important; z-index: 1001 !important; width: auto !important;
-  bottom: calc(150px + env(safe-area-inset-bottom)) !important;
-  right: max(18px, calc(50% - 252px)) !important;
+  display: flex !important; justify-content: flex-end !important;
+  margin: -4px 0 10px 0 !important;
 }}
 .st-key-clear_chat button {{
-  min-height: 0 !important; padding: 6px 14px !important; border-radius: 999px !important;
-  font-size: .8rem !important; white-space: nowrap !important; transform: none !important;
+  width: auto !important; min-height: 0 !important; padding: 5px 14px !important;
+  border-radius: 999px !important; font-size: .78rem !important; white-space: nowrap !important;
   background: var(--surface) !important; border: 1px solid var(--border) !important;
-  color: var(--muted) !important; box-shadow: var(--shadow) !important;
+  color: var(--muted) !important; box-shadow: none !important; transform: none !important;
 }}
 .st-key-clear_chat button:hover {{
   border-color: var(--accent) !important; color: var(--text) !important; transform: none !important;

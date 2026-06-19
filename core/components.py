@@ -326,3 +326,49 @@ def celebrate(new_achievements: list[dict]) -> None:
     for a in new_achievements:
         st.toast(tf(f"{a['icon']}  Achievement unlocked — {a['name']}!",
                     f"{a['icon']}  অর্জন আনলক — {t(a['name'])}!"), icon="🏆")
+
+
+# ---------------------------- shareable recap (#4) ---------------------------
+def daily_recap_image(ctx: dict) -> bytes:
+    """Render today's summary as a shareable PNG (no emojis — PIL's font lacks them)."""
+    import io
+    import datetime as dt
+    from PIL import Image, ImageDraw, ImageFont
+
+    W, H = 900, 560
+    img = Image.new("RGB", (W, H), "#0d0f14")
+    d = ImageDraw.Draw(img)
+    d.rectangle([0, 0, W, 10], fill="#00e5a0")          # accent top bar
+
+    def font(sz):
+        try:
+            return ImageFont.load_default(size=sz)       # Pillow >= 10
+        except TypeError:
+            return ImageFont.load_default()
+
+    accent, white, muted = (0, 229, 160), (232, 234, 240), (139, 147, 167)
+    d.text((44, 44), "NutriSnap", font=font(46), fill=accent)
+    d.text((46, 104), dt.date.today().strftime("%A, %d %B %Y"), font=font(26), fill=muted)
+
+    cal, goal = int(ctx.get("consumed", 0)), int(ctx.get("calorie_goal", 0) or 0)
+    left = max(0, int(ctx.get("remaining", 0)))
+    d.text((44, 170), str(cal), font=font(130), fill=white)
+    d.text((50, 320), f"of {goal} kcal   |   {left} left", font=font(28), fill=muted)
+
+    y, x = 380, 46
+    for name, val, g, col in (
+        ("Protein", ctx.get("protein", 0), ctx.get("protein_goal", 0), (96, 165, 250)),
+        ("Carbs",   ctx.get("carbs", 0),   ctx.get("carbs_goal", 0),   (251, 191, 36)),
+        ("Fat",     ctx.get("fat", 0),     ctx.get("fat_goal", 0),     (248, 113, 113)),
+    ):
+        d.text((x, y), name, font=font(24), fill=muted)
+        d.text((x, y + 32), f"{int(val)}/{int(g)}g", font=font(34), fill=col)
+        x += 230
+
+    d.text((46, 488), f"Water  {int(ctx.get('water', 0))}/{int(ctx.get('water_goal', 0))} ml",
+           font=font(26), fill=(56, 189, 248))
+    d.text((520, 488), f"Streak  {int(ctx.get('streak', 0))} days", font=font(26), fill=accent)
+
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()

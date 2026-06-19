@@ -37,6 +37,12 @@ def render(p: dict) -> None:
         C.html(f"<div class='coach-note'>💡 {i18n.tf('Answers use your live stats. Add an Ollama key in <b>Settings</b> for full conversational AI.', 'উত্তরগুলো আপনার আসল হিসাব থেকে আসে। পুরো কথোপকথনের এআই-এর জন্য <b>সেটিংসে</b> একটি Ollama কী দিন।')}</div>")
 
     history = db.get_chat()
+    # compact, right-aligned clear button at the top (out of the conversation flow)
+    if history:
+        _, cc = st.columns([3, 1])
+        if cc.button(i18n.tf("🗑 Clear", "🗑 মুছুন"), use_container_width=True, key="clear_chat"):
+            db.clear_chat()
+            st.rerun()
     if not history:
         C.html(f"<div class='coach-welcome'><span class='wave'>👋</span>"
                f"<div>{i18n.tf('<b>Hi! I am your nutrition coach.</b><br>Ask me what to eat, how your day looks, or tap a suggestion below.', '<b>হাই! আমি আপনার পুষ্টি কোচ।</b><br>কী খাবেন, আজকের দিন কেমন — জিজ্ঞেস করুন বা নিচের একটি প্রশ্নে ট্যাপ করুন।')}</div></div>")
@@ -58,10 +64,6 @@ def render(p: dict) -> None:
     prompt = st.chat_input(t("Ask your coach…"))
     if prompt:
         _send(prompt)
-        st.rerun()
-
-    if history and st.button(t("🗑 Clear conversation"), use_container_width=True):
-        db.clear_chat()
         st.rerun()
 
 

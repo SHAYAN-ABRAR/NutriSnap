@@ -75,6 +75,16 @@ html, body, [data-testid="stAppViewContainer"] {{
 }}
 [data-testid="stDecoration"] {{ display:none; }}
 #MainMenu, footer {{ visibility: hidden; }}
+/* Streamlit Community Cloud injects a bottom-right badge + creator avatar on the
+   DEPLOYED app only (not visible locally) — hide them so they don't cover the
+   bottom nav (Coach / More). Wildcards survive Streamlit's class-hash changes. */
+[class*="viewerBadge"],
+[class*="profileContainer"],
+[class*="profilePreview"],
+[class*="profileImage"],
+[class*="profileText"],
+[data-testid="stAppViewerBadge"] {{ display: none !important; }}
+a[href*="share.streamlit.io"], a[href*="streamlit.io/cloud"] {{ display: none !important; }}
 
 /* tighter, phone-width main column with safe-area padding.
    Top padding clears the fixed top bar; bottom padding clears the fixed nav. */

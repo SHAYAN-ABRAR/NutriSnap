@@ -164,14 +164,15 @@ def all_foods() -> list[dict]:
     return out
 
 
-# Display order for the cuisine filter
-CATEGORY_ORDER = ["All", "My Foods", "Bangladeshi", "Fruit", "Drinks",
+# Display order for the cuisine filter. No "All" chip — no selection (the
+# default) shows every food, handled by the `or "All"` fallback in the view.
+CATEGORY_ORDER = ["My Foods", "Bangladeshi", "Fruit", "Drinks",
                   "Sweets", "Fast food", "Everyday"]
 
 
 def categories() -> list[str]:
     present = {f.get("cat", "Everyday") for f in all_foods()}
-    ordered = [c for c in CATEGORY_ORDER if c == "All" or c in present]
+    ordered = [c for c in CATEGORY_ORDER if c in present]
     # append any categories not in the predefined order (future-proof)
     ordered += [c for c in sorted(present) if c not in ordered]
     return ordered

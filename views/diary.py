@@ -98,7 +98,7 @@ def _add_panel(log_date: str):
     meal = st.selectbox(t("Meal"), [m for m, _ in MEALS], key="add_meal", format_func=t)
 
     if src == "🔍 Search":
-        cat = st.segmented_control("Cuisine", N.categories(), default="All",
+        cat = st.segmented_control("Cuisine", N.categories(), default=None,
                                    key="add_cat", label_visibility="collapsed", format_func=t) or "All"
         q = st.text_input(t("Search foods"),
                           placeholder=i18n.tf("e.g. biryani, mango, burger, ilish…",

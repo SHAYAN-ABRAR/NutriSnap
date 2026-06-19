@@ -124,15 +124,17 @@ p, span, label, li {{ color: var(--text); }}
 .stSlider [data-baseweb="slider"] {{ padding-top: 6px; }}
 
 /* cuisine filter chips: keep all on ONE row that scrolls sideways on mobile
-   (instead of wrapping to a second line). Scrollbar hidden for a clean look. */
-.st-key-add_cat [data-testid="stButtonGroup"] {{
+   (instead of wrapping to a second line). Scrollbar hidden for a clean look.
+   Targets the button-group directly (st-key + testid are the same element, so a
+   descendant selector with a space would NOT match). */
+[data-testid="stButtonGroup"] {{
   display: flex !important; flex-wrap: nowrap !important;
   overflow-x: auto !important; overflow-y: hidden !important;
   scrollbar-width: none !important; -webkit-overflow-scrolling: touch;
 }}
-.st-key-add_cat [data-testid="stButtonGroup"]::-webkit-scrollbar {{ display: none !important; }}
-.st-key-add_cat [data-testid="stButtonGroup"] > * {{ flex: 0 0 auto !important; }}
-.st-key-add_cat [data-testid="stButtonGroup"] button {{ white-space: nowrap !important; }}
+[data-testid="stButtonGroup"] > div {{ flex-wrap: nowrap !important; flex: 0 0 auto !important; }}
+[data-testid="stButtonGroup"]::-webkit-scrollbar {{ display: none !important; }}
+[data-testid="stButtonGroup"] button {{ flex: 0 0 auto !important; white-space: nowrap !important; }}
 
 /* ---------- Custom card / component primitives ---------- */
 .ns-card {{

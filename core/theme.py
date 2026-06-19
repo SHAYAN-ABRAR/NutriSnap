@@ -37,14 +37,20 @@ def palette(mode: str = "dark") -> dict:
     return {**BRAND, **base}
 
 
-def inject_css(mode: str = "dark") -> str:
-    """Return a <style> block tuned to the active theme."""
+def inject_css(mode: str = "dark", scale: float = 1.0) -> str:
+    """Return a <style> block tuned to the active theme.
+
+    `scale` is the accessibility text-size multiplier (1.0 = normal); it sets the
+    root font-size so rem-based text and most UI grows/shrinks with it.
+    """
     p = palette(mode)
     grid = "rgba(255,255,255,.03)" if mode == "dark" else "rgba(20,30,60,.025)"
     glass = "rgba(255,255,255,.04)" if mode == "dark" else "rgba(255,255,255,.7)"
+    root_px = round(16 * float(scale or 1.0))
     return f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+html {{ font-size: {root_px}px; }}
 
 :root {{
   --bg:{p['bg']}; --surface:{p['surface']}; --surface2:{p['surface2']};
@@ -433,6 +439,62 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div {{ padding: 4px 2px; }}
 @keyframes pulse {{ 0%,100%{{opacity:1}} 50%{{opacity:.4}} }}
 @keyframes wave {{ 0%,60%,100%{{transform:rotate(0)}} 10%,30%{{transform:rotate(14deg)}} 20%{{transform:rotate(-8deg)}} 40%{{transform:rotate(10deg)}} }}
 .ns-pop {{ animation: pop .5s cubic-bezier(.2,.9,.3,1.4); }}
+
+/* ===================== Added feature styles ===================== */
+/* #8 — coach "typing…" indicator (three bouncing dots) */
+.ns-typing {{ display:inline-flex; gap:5px; align-items:center; padding:4px 2px; }}
+.ns-typing span {{
+  width:8px; height:8px; border-radius:50%; background:var(--muted);
+  animation: nsbounce 1.2s ease-in-out infinite;
+}}
+.ns-typing span:nth-child(2) {{ animation-delay:.18s; }}
+.ns-typing span:nth-child(3) {{ animation-delay:.36s; }}
+@keyframes nsbounce {{ 0%,80%,100%{{transform:translateY(0); opacity:.5}} 40%{{transform:translateY(-5px); opacity:1}} }}
+/* #8 — shimmer skeleton (used while AI works) */
+.ns-shimmer {{
+  height:14px; border-radius:7px; margin:7px 0;
+  background:linear-gradient(90deg, var(--surface2) 25%, var(--border) 37%, var(--surface2) 63%);
+  background-size:400% 100%; animation: nsshimmer 1.4s ease infinite;
+}}
+@keyframes nsshimmer {{ 0%{{background-position:100% 0}} 100%{{background-position:-100% 0}} }}
+
+/* #3 — dashboard insight chips */
+.ns-insights {{ display:flex; flex-wrap:wrap; gap:8px; margin:2px 0 14px; }}
+.ns-insight {{
+  display:inline-flex; align-items:center; gap:6px; font-size:.8rem; font-weight:600;
+  padding:7px 12px; border-radius:999px; background:var(--surface);
+  border:1px solid var(--border); color:var(--text); white-space:nowrap;
+}}
+.ns-insight.good {{ border-color:rgba(0,229,160,.35); color:var(--accent); background:rgba(0,229,160,.10); }}
+.ns-insight.warn {{ border-color:rgba(251,191,36,.35); color:var(--gold); background:rgba(251,191,36,.10); }}
+
+/* #5 — friendly empty states */
+.ns-empty {{
+  text-align:center; padding:26px 18px; border:1px dashed var(--border);
+  border-radius:var(--r-lg); background:var(--surface); color:var(--muted);
+}}
+.ns-empty .emoji {{ font-size:2.2rem; display:block; margin-bottom:8px; }}
+.ns-empty b {{ color:var(--text); }}
+
+/* #4 — daily recap card preview */
+.ns-recap {{
+  border-radius:var(--r-lg); padding:18px; color:#04201a;
+  background:linear-gradient(135deg, var(--accent), var(--accent2));
+  box-shadow:var(--shadow); margin-bottom:6px;
+}}
+
+/* #7 / #10 — quick-add & portion chips (horizontal scroll row) */
+.st-key-quickadd_row [data-testid="stHorizontalBlock"],
+.ns-chiprow {{ overflow-x:auto !important; scrollbar-width:none; }}
+.ns-chiprow::-webkit-scrollbar {{ display:none; }}
+
+/* #11 — Ramadan banner */
+.ns-ramadan {{
+  display:flex; align-items:center; gap:10px; font-size:.85rem;
+  padding:10px 14px; border-radius:14px; margin-bottom:12px; color:var(--text);
+  background:linear-gradient(135deg, rgba(96,165,250,.16), rgba(0,229,160,.10));
+  border:1px solid var(--border); border-left:3px solid var(--water);
+}}
 
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {{

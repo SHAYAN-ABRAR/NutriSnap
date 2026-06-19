@@ -46,6 +46,12 @@ def render(p: dict) -> None:
         f"<div class='ns-h' style='color:var(--accent)'>{left_lbl}</div></div></div>"
     )
 
+    # ---- empty state (#5) when the whole day is blank ----
+    if totals["items"] == 0:
+        C.html(f"<div class='ns-empty' style='margin-bottom:12px'><span class='emoji'>🍽️</span>"
+               f"<b>{i18n.tf('No meals logged yet', 'এখনও কোনো খাবার লেখা হয়নি')}</b><br>"
+               f"{i18n.tf('Search, scan a photo, or add a custom food below.', 'নিচে খুঁজুন, ছবি তুলুন বা নিজের খাবার যোগ করুন।')}</div>")
+
     # ---- add food panel ----
     with st.expander(f"➕  {t('Add food')}", expanded=totals["items"] == 0):
         _add_panel(d)

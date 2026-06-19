@@ -77,6 +77,19 @@ def render(p: dict) -> None:
         if new_mode != mode:
             db.set_meta("theme", new_mode)
             st.rerun()
+
+        # text size (accessibility) — sets the root font-size multiplier
+        scale = float(db.get_meta("text_scale", 1.0) or 1.0)
+        sizes = {i18n.tf("A  Normal", "A  স্বাভাবিক"): 1.0,
+                 i18n.tf("A+  Large", "A+  বড়"): 1.12,
+                 i18n.tf("A++  Larger", "A++  আরও বড়"): 1.25}
+        cur_label = next((k for k, v in sizes.items() if abs(v - scale) < 0.01), list(sizes)[0])
+        pick = st.radio(i18n.tf("Text size", "লেখার আকার"), list(sizes.keys()),
+                        index=list(sizes).index(cur_label), horizontal=True, key="text_size_radio")
+        if abs(sizes[pick] - scale) > 0.01:
+            db.set_meta("text_scale", sizes[pick])
+            st.rerun()
+
         st.caption(i18n.tf("System theme is set on first run via .streamlit/config.toml; this toggle overrides it live.",
                            "প্রথমবার চালুতে .streamlit/config.toml থেকে থিম ঠিক হয়; এই টগল তা সরাসরি বদলায়।"))
 

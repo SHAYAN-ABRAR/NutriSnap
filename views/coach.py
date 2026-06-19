@@ -69,6 +69,11 @@ def render(p: dict) -> None:
 def _send(text: str) -> None:
     db.add_chat("user", text)
     ctx = S.daily_context()
-    with st.spinner("Coach is thinking…"):
+    # show a "typing…" bubble while the model responds (replaces the plain spinner)
+    with st.chat_message("assistant", avatar="🤖"):
+        ph = st.empty()
+        ph.markdown("<div class='ns-typing'><span></span><span></span><span></span></div>",
+                    unsafe_allow_html=True)
         reply = ai.coach_reply(text, ctx, db.get_chat())
+        ph.empty()
     db.add_chat("assistant", reply)

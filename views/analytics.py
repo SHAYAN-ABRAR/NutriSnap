@@ -7,6 +7,7 @@ import streamlit as st
 
 from core import database as db
 from core import components as C
+from core import state as S
 from core import gamification as gm
 from core import i18n
 from core.i18n import t
@@ -25,6 +26,16 @@ def render(p: dict) -> None:
     logged_cals = [d["calories"] for d in data if d["calories"] > 0]
     avg = round(sum(logged_cals) / len(logged_cals)) if logged_cals else 0
     on_goal = sum(1 for c in logged_cals if abs(c - goal) <= 150)
+
+    # ---- empty state (#5) ----
+    if not logged_cals:
+        C.html(f"<div class='ns-empty'><span class='emoji'>📊</span>"
+               f"<b>{i18n.tf('No data yet', 'এখনও কোনো ডেটা নেই')}</b><br>"
+               f"{i18n.tf('Log a few meals and your trends, macros and streaks will appear here.', 'কিছু খাবার লিখুন — তাহলে আপনার ট্রেন্ড, ম্যাক্রো ও স্ট্রিক এখানে দেখা যাবে।')}</div>")
+        if st.button(i18n.tf("➕  Add food", "➕  খাবার যোগ করুন"), use_container_width=True,
+                     type="primary", key="an_empty_add"):
+            S.go("diary")
+        return
 
     C.metric_grid([
         (t("Avg / day"), f"{avg}", "var(--accent)"),

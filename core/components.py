@@ -20,7 +20,8 @@ def get_mode() -> str:
 
 def inject_theme() -> dict:
     mode = get_mode()
-    st.markdown(T.inject_css(mode), unsafe_allow_html=True)
+    scale = db.get_meta("text_scale", 1.0) or 1.0
+    st.markdown(T.inject_css(mode, scale), unsafe_allow_html=True)
     return T.palette(mode)
 
 
@@ -100,12 +101,24 @@ def _style(fig, p, h=None):
     return fig
 
 
+def ring_color(consumed: float, goal: int, p: dict) -> str:
+    """Green in range, amber as you near the goal, red once over budget."""
+    if goal <= 0:
+        return p["accent"]
+    pct = consumed / goal * 100
+    if pct > 100:
+        return p["warn"]
+    if pct >= 85:
+        return p["gold"]
+    return p["accent"]
+
+
 def calorie_ring(consumed: float, goal: int, p: dict, height: int = 230) -> None:
     consumed = max(0, consumed)
     remaining = max(0, goal - consumed)
     over = max(0, consumed - goal)
     pct = round(consumed / goal * 100) if goal else 0
-    color = p["accent"] if consumed <= goal else p["warn"]
+    color = ring_color(consumed, goal, p)
 
     values = [min(consumed, goal), remaining] if not over else [goal, 0]
     fig = go.Figure(go.Pie(

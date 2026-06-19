@@ -93,6 +93,16 @@ def render(p: dict) -> None:
         st.caption(i18n.tf("System theme is set on first run via .streamlit/config.toml; this toggle overrides it live.",
                            "প্রথমবার চালুতে .streamlit/config.toml থেকে থিম ঠিক হয়; এই টগল তা সরাসরি বদলায়।"))
 
+        # Ramadan mode (#11)
+        rmd = bool(db.get_meta("ramadan_mode", False))
+        new_rmd = st.toggle(i18n.tf("🌙 Ramadan mode (Sehri & Iftar)", "🌙 রমজান মোড (সেহরি ও ইফতার)"),
+                            value=rmd, key="ramadan_toggle")
+        if new_rmd != rmd:
+            db.set_meta("ramadan_mode", new_rmd)
+            st.rerun()
+        st.caption(i18n.tf("Switches your meal sections to Sehri & Iftar and shows a fasting-friendly banner.",
+                           "আপনার খাবারের ভাগগুলো সেহরি ও ইফতারে বদলে দেয় এবং রোজা-বান্ধব ব্যানার দেখায়।"))
+
     # ---------------- AI connection ----------------
     with st.expander(t("🤖  AI model (Ollama Cloud)")):
         cfg = ai.get_config()

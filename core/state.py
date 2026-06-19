@@ -13,6 +13,17 @@ def go(page: str) -> None:
     st.rerun()
 
 
+def ramadan_on() -> bool:
+    return bool(db.get_meta("ramadan_mode", False))
+
+
+def meals() -> list[tuple[str, str]]:
+    """Meal sections + emojis — Ramadan mode swaps to Sehri/Iftar (#11)."""
+    if ramadan_on():
+        return [("Sehri", "🌙"), ("Iftar", "🌆"), ("Dinner", "🍽️"), ("Snacks", "🍪")]
+    return [("Breakfast", "🌅"), ("Lunch", "🌞"), ("Dinner", "🌙"), ("Snacks", "🍪")]
+
+
 def daily_context() -> dict:
     """One dict with everything the dashboard, coach and achievements need."""
     p = db.get_profile() or {}

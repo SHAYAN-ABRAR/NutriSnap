@@ -179,6 +179,8 @@ TRANSLATIONS: dict[str, str] = {
     "Lunch": "দুপুরের খাবার",
     "Dinner": "রাতের খাবার",
     "Snacks": "হালকা নাশতা",
+    "Sehri": "সেহরি",
+    "Iftar": "ইফতার",
     "Cuisine": "রান্নার ধরন",
     "Search foods": "খাবার খুঁজুন",
     "Your most-logged foods will appear here.": "আপনার বেশি লেখা খাবারগুলো এখানে আসবে।",

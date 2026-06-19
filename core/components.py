@@ -29,6 +29,19 @@ def html(s: str) -> None:
     st.markdown(s, unsafe_allow_html=True)
 
 
+def ramadan_banner() -> None:
+    """Show a Ramadan greeting/tip banner when Ramadan mode is on (#11)."""
+    from core import i18n
+    if not db.get_meta("ramadan_mode", False):
+        return
+    html(f"<div class='ns-ramadan'>🌙 <span>"
+         + i18n.tf("Ramadan Mubarak — meals are set to Sehri &amp; Iftar. "
+                   "Hydrate well between Iftar and Sehri.",
+                   "রমজান মোবারক — খাবার সেহরি ও ইফতারে সাজানো হয়েছে। "
+                   "ইফতার ও সেহরির মাঝে পর্যাপ্ত পানি পান করুন।")
+         + "</span></div>")
+
+
 def section(title: str, sub: str = "", emoji: str = "") -> None:
     from core.i18n import t
     title, sub = t(title), t(sub)

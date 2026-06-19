@@ -79,7 +79,7 @@ def _show_results(p: dict) -> None:
         return
 
     C.section("Detected foods", "Review and tweak — your edits are saved, not the guess.")
-    meal = st.selectbox(t("Add to meal"), ["Breakfast", "Lunch", "Dinner", "Snacks"],
+    meal = st.selectbox(t("Add to meal"), [m for m, _ in S.meals()],
                         index=_meal_guess(), format_func=t)
 
     edited = []

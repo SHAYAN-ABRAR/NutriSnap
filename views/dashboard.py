@@ -27,6 +27,9 @@ def render(p: dict) -> None:
         f"<div class='ns-pill accent'><span class='flame'>🔥</span> {streak_lbl}</div></div>"
     )
 
+    # ---- Ramadan banner (#11) ----
+    C.ramadan_banner()
+
     # ---- insight chips (#3) ----
     chips = _insights(ctx)
     if chips:
@@ -163,7 +166,9 @@ def _food_breakdown(ctx: dict) -> None:
         by_meal: dict[str, list] = {}
         for f in foods:
             by_meal.setdefault(f["meal"], []).append(f)
-        for meal, emoji in MEAL_ORDER:
+        order = S.meals()
+        ordered = list(order) + [(m, "🍽️") for m in by_meal if m not in dict(order)]
+        for meal, emoji in ordered:
             items = by_meal.get(meal)
             if not items:
                 continue

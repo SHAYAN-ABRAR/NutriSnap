@@ -19,6 +19,7 @@ MEALS = [("Breakfast", "🌅"), ("Lunch", "🌞"), ("Dinner", "🌙"), ("Snacks"
 def render(p: dict) -> None:
     ss = st.session_state
     ss.setdefault("diary_date", date.today().isoformat())
+    C.ramadan_banner()   # #11
 
     # ---- date navigator ----
     cur = date.fromisoformat(ss.diary_date)
@@ -57,11 +58,15 @@ def render(p: dict) -> None:
         _add_panel(d)
 
     # ---- meals ----
-    by_meal: dict[str, list] = {m: [] for m, _ in MEALS}
+    meal_list = S.meals()
+    by_meal: dict[str, list] = {m: [] for m, _ in meal_list}
     for f in db.get_foods(d):
         by_meal.setdefault(f["meal"], []).append(f)
+    # include any logged meals not in the current set (so toggling Ramadan mode
+    # never hides previously-logged data)
+    extra = [(m, "🍽️") for m in by_meal if m not in dict(meal_list) and by_meal[m]]
 
-    for meal, emoji in MEALS:
+    for meal, emoji in meal_list + extra:
         items = by_meal.get(meal, [])
         cals = sum(i["calories"] * i["qty"] for i in items)
         with C.card():
@@ -103,7 +108,7 @@ def _add_panel(log_date: str):
     open_food = _build_food_dialog(log_date)   # #2 food-detail dialog
     src = st.radio("Source", ["🔍 Search", "⭐ Favorites", "🕘 Recent", "🍱 Meals", "✏️ Manual"],
                    horizontal=True, label_visibility="collapsed", key="add_src", format_func=t)
-    meal = st.selectbox(t("Meal"), [m for m, _ in MEALS], key="add_meal", format_func=t)
+    meal = st.selectbox(t("Meal"), [m for m, _ in S.meals()], key="add_meal", format_func=t)
 
     if src == "🔍 Search":
         # apply a recent-search chip queued on the previous run (set BEFORE the widget)

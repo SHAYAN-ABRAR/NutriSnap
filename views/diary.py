@@ -100,11 +100,15 @@ def render(p: dict) -> None:
 
 def _add_panel(log_date: str):
     ss = st.session_state
-    src = st.radio("Source", ["🔍 Search", "⭐ Favorites", "🕘 Recent", "✏️ Manual"],
+    open_food = _build_food_dialog(log_date)   # #2 food-detail dialog
+    src = st.radio("Source", ["🔍 Search", "⭐ Favorites", "🕘 Recent", "🍱 Meals", "✏️ Manual"],
                    horizontal=True, label_visibility="collapsed", key="add_src", format_func=t)
     meal = st.selectbox(t("Meal"), [m for m, _ in MEALS], key="add_meal", format_func=t)
 
     if src == "🔍 Search":
+        # apply a recent-search chip queued on the previous run (set BEFORE the widget)
+        if "pending_search" in ss:
+            ss["add_q"] = ss.pop("pending_search")
         cat = st.segmented_control("Cuisine", N.categories(), default=None,
                                    key="add_cat", label_visibility="collapsed", format_func=t) or "All"
         # st_keyup reruns on each keystroke (debounced) so results update live
@@ -112,6 +116,17 @@ def _add_panel(log_date: str):
                      placeholder=i18n.tf("e.g. biryani, mango, burger, ilish…",
                                          "যেমন বিরিয়ানি, আম, বার্গার, ইলিশ…"),
                      key="add_q", debounce=200) or ""
+        # recent searches (#9) — quick chips when the box is empty
+        if not q.strip():
+            recents = db.get_recent_searches()
+            if recents:
+                C.html(f"<div class='ns-sub' style='margin:4px 2px 2px'>"
+                       f"{i18n.tf('Recent searches', 'সাম্প্রতিক খোঁজা')}</div>")
+                rcols = st.columns(3)
+                for i, term in enumerate(recents[:6]):
+                    if rcols[i % 3].button(f"🔎 {term}", key=f"rs{i}", use_container_width=True):
+                        ss["pending_search"] = term
+                        st.rerun()
         # show more when browsing a whole cuisine without a query
         limit = 14 if q.strip() else (40 if cat != "All" else 14)
         results = N.search_foods(q, limit=limit, category=cat)
@@ -124,14 +139,14 @@ def _add_panel(log_date: str):
                 ss["add_src"] = "✏️ Manual"
                 st.rerun()
         for i, f in enumerate(results):
-            _food_button(f, meal, log_date, f"srch{i}")
+            _food_button(f, meal, log_date, f"srch{i}", open_food=open_food, query=q)
 
     elif src == "⭐ Favorites":
         favs = db.favorites()
         if not favs:
             st.caption(t("Your most-logged foods will appear here."))
         for i, f in enumerate(favs):
-            _food_button(f, meal, log_date, f"fav{i}",
+            _food_button(f, meal, log_date, f"fav{i}", open_food=open_food,
                          subtitle=i18n.tf(f"logged {f['freq']}×", f"{f['freq']}× লেখা হয়েছে"))
 
     elif src == "🕘 Recent":
@@ -139,7 +154,10 @@ def _add_panel(log_date: str):
         if not recents:
             st.caption(t("Recently logged foods will appear here."))
         for i, f in enumerate(recents):
-            _food_button(f, meal, log_date, f"rec{i}")
+            _food_button(f, meal, log_date, f"rec{i}", open_food=open_food)
+
+    elif src == "🍱 Meals":
+        _meal_templates_panel(meal, log_date)
 
     else:  # Manual — create your own food
         st.caption(t("Create any food that isn't in the list. Optionally add a photo and "
@@ -177,8 +195,9 @@ def _add_panel(log_date: str):
                 st.rerun()
 
 
-def _food_button(f: dict, meal: str, log_date: str, key: str, subtitle: str = ""):
-    c1, c2 = st.columns([5, 2])
+def _food_button(f: dict, meal: str, log_date: str, key: str, subtitle: str = "",
+                 open_food=None, query: str = ""):
+    c1, c2, c3 = st.columns([5, 1, 1.6])
     sub = subtitle or f.get("unit", "1 serving")
     cat = f.get("cat")
     tag = f" <span class='ns-sub'>· {t(cat)}</span>" if cat and cat not in ("Everyday", None) else ""
@@ -189,9 +208,116 @@ def _food_button(f: dict, meal: str, log_date: str, key: str, subtitle: str = ""
         f"<span class='ns-sub'>{cals} · {loc(sub)}</span></div></div>",
         unsafe_allow_html=True,
     )
-    if c2.button(t("Add"), key=key, use_container_width=True):
+    # ℹ️ opens the detail sheet (#2) with portion presets (#10)
+    if open_food and c2.button("ℹ️", key=f"{key}_i", use_container_width=True,
+                               help=i18n.tf("Details & portion", "বিবরণ ও পরিমাণ")):
+        if query:
+            db.add_recent_search(query)
+        st.session_state["detail_qty"] = 1.0
+        open_food(f, meal)
+    if c3.button(t("Add"), key=key, use_container_width=True):
         db.add_food(meal, {**f, "qty": 1, "unit": f.get("unit", "serving"),
                            "image": f.get("image", ""), "source": "library"}, log_date)
+        if query:
+            db.add_recent_search(query)
         S.run_achievement_check()
         st.toast(i18n.tf(f"Added {f['name']} to {meal} ✓", f"{t(f['name'])} {t(meal)}-এ যোগ হয়েছে ✓"), icon="✅")
         st.rerun()
+
+
+# ----------------------- food detail sheet (#2) + presets (#10) --------------
+def _build_food_dialog(log_date: str):
+    """Return a localized @st.dialog showing a food's macros, portion presets and Add."""
+    @st.dialog(i18n.tf("Food details", "খাবারের বিবরণ"))
+    def _dlg(f: dict, meal: str):
+        _food_detail_body(f, meal, log_date)
+    return _dlg
+
+
+def _food_detail_body(f: dict, meal: str, log_date: str) -> None:
+    ss = st.session_state
+    cals = f.get("calories", 0)
+    C.html(
+        f"<div style='display:flex;align-items:center;gap:4px'>{C.food_icon(f, 52)}"
+        f"<div><div class='ns-h'>{t(f['name'])}</div>"
+        f"<div class='ns-sub'>{loc(f.get('unit', '1 serving'))}</div></div></div>"
+    )
+    pro, car = int(f.get("protein", 0)), int(f.get("carbs", 0))
+    fat, fib = int(f.get("fat", 0)), int(f.get("fiber", 0))
+    C.html(
+        f"<div class='ns-sub' style='margin:8px 0 4px'>"
+        f"{loc(f'{int(cals)} kcal')} · {loc(f'{pro}g')} {t('protein')} · "
+        f"{loc(f'{car}g')} {t('carbs')} · {loc(f'{fat}g')} {t('fat')} · "
+        f"{loc(f'{fib}g')} {t('fiber')}</div>"
+    )
+
+    C.html(f"<div class='ns-sub' style='margin:6px 2px 2px'>{i18n.tf('Portion', 'পরিমাণ')}</div>")
+    ss.setdefault("detail_qty", 1.0)
+    pc = st.columns([1, 1, 1, 2])
+    for i, (lbl, val) in enumerate([("½", 0.5), ("1", 1.0), ("2", 2.0)]):
+        if pc[i].button(lbl, key=f"pp_{i}", use_container_width=True):
+            ss["detail_qty"] = float(val)
+            st.rerun()
+    qty = pc[3].number_input(i18n.tf("Qty", "সংখ্যা"), 0.25, 30.0, step=0.25,
+                             key="detail_qty", label_visibility="collapsed")
+
+    total = int(cals * qty)
+    C.html(f"<div class='ns-card' style='text-align:center;margin:8px 0'>"
+           f"<span class='ns-sub'>{i18n.tf('Total to add', 'যোগ করার মোট')}</span> "
+           f"<b class='ns-grad' style='font-size:1.2rem'>{loc(f'{total} kcal')}</b></div>")
+
+    if st.button(i18n.tf(f"➕  Add to {t(meal)}", f"➕  {t(meal)}-এ যোগ করুন"),
+                 type="primary", use_container_width=True, key="detail_add"):
+        db.add_food(meal, {**f, "qty": float(qty), "unit": f.get("unit", "serving"),
+                           "image": f.get("image", ""), "source": "library"}, log_date)
+        S.run_achievement_check()
+        ss.pop("detail_qty", None)
+        st.toast(i18n.tf(f"Added {f['name']} to {meal} ✓",
+                         f"{t(f['name'])} {t(meal)}-এ যোগ হয়েছে ✓"), icon="✅")
+        st.rerun()
+
+
+# --------------------------- meal templates (#1) -----------------------------
+def _meal_templates_panel(meal: str, log_date: str) -> None:
+    tpls = db.get_meal_templates()
+    if not tpls:
+        st.caption(i18n.tf("Save a meal you eat often, then log the whole thing in one tap.",
+                           "প্রায়ই খান এমন একটা খাবার সেট সেভ করুন, পরে এক ট্যাপে পুরোটা যোগ করুন।"))
+    for i, tpl in enumerate(tpls):
+        items = tpl.get("items", [])
+        tot = int(sum(it.get("calories", 0) * it.get("qty", 1) for it in items))
+        meta = i18n.tf(f"{len(items)} items · {tot} kcal", f"{len(items)}টি · {tot} ক্যালরি")
+        c1, c2, c3 = st.columns([5, 1.5, 1])
+        c1.markdown(
+            f"<div style='padding-top:4px'><b>🍱 {tpl['name']}</b><br>"
+            f"<span class='ns-sub'>{loc(meta)}</span></div>", unsafe_allow_html=True)
+        if c2.button(t("Add"), key=f"tpl{i}", use_container_width=True):
+            for it in items:
+                db.add_food(meal, {**it, "qty": it.get("qty", 1), "source": "template"}, log_date)
+            S.run_achievement_check()
+            st.toast(i18n.tf(f"Added “{tpl['name']}” to {meal} ✓",
+                             f"“{tpl['name']}” {t(meal)}-এ যোগ হয়েছে ✓"), icon="✅")
+            st.rerun()
+        if c3.button("🗑", key=f"tpldel{i}", use_container_width=True):
+            db.delete_meal_template(tpl["name"])
+            st.rerun()
+
+    st.divider()
+    cur = [f for f in db.get_foods(log_date) if f["meal"] == meal]
+    if cur:
+        with st.form("save_tpl", clear_on_submit=True):
+            nm = st.text_input(i18n.tf("Template name", "টেমপ্লেটের নাম"),
+                               placeholder=i18n.tf(f"e.g. My {meal}", f"যেমন আমার {t(meal)}"))
+            if st.form_submit_button(
+                    i18n.tf(f"💾  Save current {t(meal)} ({len(cur)} items)",
+                            f"💾  বর্তমান {t(meal)} সেভ করুন ({len(cur)}টি)"),
+                    type="primary", use_container_width=True):
+                keys = ("name", "emoji", "image", "unit", "calories", "protein",
+                        "carbs", "fat", "fiber", "qty")
+                items = [{k: it.get(k) for k in keys} for it in cur]
+                db.save_meal_template(nm or t(meal), items)
+                st.toast(i18n.tf("Meal template saved ✓", "খাবার সেট সেভ হয়েছে ✓"), icon="✅")
+                st.rerun()
+    else:
+        st.caption(i18n.tf(f"Add foods to {meal} today first, then save them as a reusable template.",
+                           f"আগে আজকের {t(meal)}-এ খাবার যোগ করুন, তারপর টেমপ্লেট হিসেবে সেভ করুন।"))

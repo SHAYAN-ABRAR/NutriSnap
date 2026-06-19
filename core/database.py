@@ -384,6 +384,36 @@ def unlocked_codes() -> set[str]:
     return {r["code"] for r in rows}
 
 
+# ----------------------- meal templates / quick meals ------------------------
+def get_meal_templates() -> list[dict]:
+    return get_meta("meal_templates", []) or []
+
+
+def save_meal_template(name: str, items: list[dict]) -> None:
+    name = (name or "Meal").strip()
+    tpls = [t for t in get_meal_templates() if t.get("name", "").lower() != name.lower()]
+    tpls.append({"name": name, "items": items, "created_at": _now()})
+    set_meta("meal_templates", tpls)
+
+
+def delete_meal_template(name: str) -> None:
+    set_meta("meal_templates", [t for t in get_meal_templates() if t.get("name") != name])
+
+
+# ------------------------------ recent searches ------------------------------
+def get_recent_searches() -> list[str]:
+    return get_meta("recent_searches", []) or []
+
+
+def add_recent_search(q: str) -> None:
+    q = (q or "").strip()
+    if len(q) < 2:
+        return
+    lst = [s for s in get_recent_searches() if s.lower() != q.lower()]
+    lst.insert(0, q)
+    set_meta("recent_searches", lst[:6])
+
+
 # ----------------------------- export / reset --------------------------------
 def export_all() -> dict:
     c = _conn()

@@ -172,6 +172,7 @@ TRANSLATIONS: dict[str, str] = {
     "🔍 Search": "🔍 খুঁজুন",
     "⭐ Favorites": "⭐ পছন্দের",
     "🕘 Recent": "🕘 সাম্প্রতিক",
+    "🍱 Meals": "🍱 খাবার সেট",
     "✏️ Manual": "✏️ নিজে লিখুন",
     "Meal": "খাবারের বেলা",
     "Breakfast": "সকালের নাশতা",

@@ -26,8 +26,8 @@ DARK = {
     "shadow": "0 8px 30px rgba(0,0,0,.45)",
 }
 LIGHT = {
-    "bg": "#f4f6fb", "surface": "#ffffff", "surface2": "#eef1f7",
-    "border": "#e2e7f0", "text": "#10131a", "muted": "#5b6477",
+    "bg": "#e9f4ec", "surface": "#ffffff", "surface2": "#eef1f7",
+    "border": "#d9dfeb", "text": "#10131a", "muted": "#5b6477",
     "shadow": "0 8px 30px rgba(20,30,60,.10)",
 }
 
@@ -46,6 +46,7 @@ def inject_css(mode: str = "dark", scale: float = 1.0) -> str:
     p = palette(mode)
     grid = "rgba(255,255,255,.03)" if mode == "dark" else "rgba(20,30,60,.025)"
     glass = "rgba(255,255,255,.04)" if mode == "dark" else "rgba(255,255,255,.7)"
+    divider = "rgba(255,255,255,.09)" if mode == "dark" else "rgba(20,30,60,.14)"
     root_px = round(16 * float(scale or 1.0))
     return f"""
 <style>
@@ -102,21 +103,24 @@ h1,h2,h3,h4 {{ font-family:'Space Grotesk', sans-serif; letter-spacing:-.5px; co
 p, span, label, li {{ color: var(--text); }}
 
 /* ---------- Buttons ---------- */
-.stButton > button, .stDownloadButton > button, .stFormSubmitButton > button {{
+/* descendant (not child) selectors: buttons with help= tooltips are nested
+   inside stTooltipHoverTarget spans, which `.stButton > button` misses —
+   leaving them on Streamlit's dark base theme (black squares in light mode) */
+.stButton button, .stDownloadButton button, .stFormSubmitButton button {{
   border-radius: var(--r-md); border:1px solid var(--border);
   background: var(--surface2); color: var(--text);
   font-weight:600; padding:.62rem 1rem; min-height:46px;
   transition: transform .12s ease, box-shadow .18s ease, background .18s ease;
 }}
-.stButton > button:hover, .stDownloadButton > button:hover {{
+.stButton button:hover, .stDownloadButton button:hover {{
   transform: translateY(-1px); box-shadow: var(--shadow); border-color: var(--accent);
 }}
-.stButton > button:active {{ transform: scale(.97); }}
-.stButton > button[kind="primary"], .stFormSubmitButton > button {{
+.stButton button:active {{ transform: scale(.97); }}
+.stButton button[kind="primary"], .stFormSubmitButton button {{
   background: linear-gradient(135deg, var(--accent), var(--accent2));
   color:#04201a; border:none; box-shadow: 0 6px 22px rgba(0,229,160,.35);
 }}
-.stButton > button[kind="primary"]:hover {{ filter:brightness(1.05); }}
+.stButton button[kind="primary"]:hover {{ filter:brightness(1.05); }}
 
 /* ---------- Inputs ---------- */
 [data-baseweb="input"] input, [data-baseweb="textarea"] textarea,
@@ -152,15 +156,24 @@ p, span, label, li {{ color: var(--text); }}
 .ns-card.glass {{ background:{glass}; backdrop-filter: blur(12px); }}
 
 /* Native bordered containers (st.container(border=True)) styled as cards.
-   This reliably wraps charts/widgets, unlike open/close markdown divs. */
-div[data-testid="stVerticalBlockBorderWrapper"] {{
+   This reliably wraps charts/widgets, unlike open/close markdown divs.
+   Streamlit ≥1.56 renders these as plain stLayoutWrapper divs (no testid of
+   their own, no border), so cards are matched by the .ns-cardmark marker that
+   C.card() renders as a direct child — the strict child chain keeps outer
+   layout wrappers (page shell, column rows) from matching too. The old
+   stVerticalBlockBorderWrapper selector is kept for pre-1.56 Streamlit. */
+div[data-testid="stVerticalBlockBorderWrapper"],
+[data-testid="stLayoutWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .ns-cardmark) {{
   background: var(--surface) !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--r-lg) !important;
   box-shadow: var(--shadow);
   margin-bottom: 12px;
+  padding: 14px 12px;
 }}
 div[data-testid="stVerticalBlockBorderWrapper"] > div {{ padding: 4px 2px; }}
+/* the zero-height marker must not eat a flex-gap slot inside the card */
+[data-testid="stElementContainer"]:has(.ns-cardmark) {{ display: none !important; }}
 .ns-h {{ font-family:'Space Grotesk'; font-weight:700; font-size:1.02rem; margin-bottom:2px; }}
 .ns-sub {{ color:var(--muted); font-size:.8rem; }}
 .ns-big {{ font-family:'Space Grotesk'; font-weight:700; font-size:2.1rem; line-height:1; }}
@@ -181,6 +194,13 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div {{ padding: 4px 2px; }}
   text-align:center; font-family:'Space Grotesk'; font-weight:700; font-size:1.1rem;
   line-height:46px; min-height:46px; color:var(--text);
 }}
+
+/* grey section divider: hairline between page sections so they read as
+   separate blocks (most useful in light mode, where cards sit on a near-white
+   bg). The wrapper's negative margin cancels the extra flex-gap the marker
+   element would otherwise add between blocks. */
+.ns-divider {{ height:1px; background:{divider}; border-radius:1px; margin:0 2px; }}
+[data-testid="stElementContainer"]:has(.ns-divider) {{ margin:-4px 0; }}
 
 /* diary food rows */
 .ns-food {{ display:flex; align-items:center; justify-content:space-between; padding:11px 4px; border-bottom:1px dashed var(--border); }}

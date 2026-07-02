@@ -36,6 +36,7 @@ def render(p: dict) -> None:
         C.html("<div class='ns-insights'>"
                + "".join(f"<span class='ns-insight {c}'>{txt}</span>" for c, txt in chips)
                + "</div>")
+    C.divider()
 
     # ---- hero calorie ring ----
     with C.card():
@@ -44,6 +45,7 @@ def render(p: dict) -> None:
         _stat(cols[0], t("Goal"), f"{ctx['calorie_goal']}", "var(--text)")
         _stat(cols[1], t("Food"), f"{int(ctx['consumed'])}", "var(--accent)")
         _stat(cols[2], t("Left"), f"{int(max(0, ctx['remaining']))}", "var(--protein)")
+    C.divider()
 
     # ---- quick actions ----
     a1, a2 = st.columns(2)
@@ -55,6 +57,7 @@ def render(p: dict) -> None:
     # ---- quick-add favorites (#7): one-tap re-log to the current meal ----
     favs = db.favorites(limit=6)
     if favs:
+        C.divider()
         meal_now = _meal_now()
         C.html(f"<div class='ns-sub' style='margin:8px 2px 2px'>"
                f"{i18n.tf('Quick add', 'দ্রুত যোগ করুন')} · {t(meal_now)}</div>")
@@ -70,11 +73,13 @@ def render(p: dict) -> None:
                 st.rerun()
 
     # ---- macros (pure-HTML card, self-contained) ----
+    C.divider()
     C.macro_bars(ctx, {"protein_g": ctx["protein_goal"], "carbs_g": ctx["carbs_goal"],
                        "fat_g": ctx["fat_goal"], "fiber_g": 30}, p)
 
     # ---- expandable "what you ate" breakdown ----
     _food_breakdown(ctx)
+    C.divider()
 
     # ---- water + weight side by side ----
     w1, w2 = st.columns(2)
@@ -124,6 +129,7 @@ def render(p: dict) -> None:
                 S.go("weight")
 
     # ---- consistency / level ----
+    C.divider()
     lvl = gm.level_for(gm.total_xp())
     with C.card():
         C.html(
@@ -141,6 +147,7 @@ def render(p: dict) -> None:
     if ctx["items"] > 0:
         try:
             recap = C.daily_recap_image(ctx)
+            C.divider()
             st.download_button(
                 i18n.tf("📤  Share today's recap", "📤  আজকের সারসংক্ষেপ শেয়ার করুন"),
                 data=recap, file_name=f"nutrisnap-{db.today()}.png",

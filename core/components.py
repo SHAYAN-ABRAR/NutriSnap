@@ -52,9 +52,20 @@ def section(title: str, sub: str = "", emoji: str = "") -> None:
 
 @contextmanager
 def card():
-    """A real container styled like .ns-card — use this to wrap charts/widgets."""
+    """A real container styled like .ns-card — use this to wrap charts/widgets.
+
+    Streamlit ≥1.56 renders st.container(border=True) as a plain stLayoutWrapper
+    (the stVerticalBlockBorderWrapper testid is gone and no border is drawn), so
+    a .ns-cardmark marker is emitted for theme.py to find and style the card.
+    """
     with st.container(border=True):
+        html("<span class='ns-cardmark'></span>")
         yield
+
+
+def divider() -> None:
+    """Grey hairline between page sections (see .ns-divider in theme.py)."""
+    html("<div class='ns-divider'></div>")
 
 
 def card_title(title: str, sub: str = "") -> None:
